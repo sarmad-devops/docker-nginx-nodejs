@@ -12,28 +12,14 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Create non-root user - security best practice
-RUN addgroup --system appgroup && \
-    adduser --system --ingroup appgroup appuser
+COPY --from=builder /root/.local /root/.local
 
-# Copy dependencies from builder
-COPY --from=builder /root/.local /home/appuser/.local
-
-# Copy app code
 COPY app.py .
 
-# Set ownership
-RUN chown -R appuser:appgroup /app
-
-# Switch to non-root user
-USER appuser
-
-# Environment variables
 ENV APP_VERSION=1.0.0
 ENV APP_ENV=production
-ENV PATH=/home/appuser/.local/bin:$PATH
+ENV PATH=/root/.local/bin:$PATH
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"
 
